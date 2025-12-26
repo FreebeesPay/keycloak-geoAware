@@ -173,6 +173,84 @@ public class JpaLoginRecordRepository implements LoginRecordRepository {
     }
 
     @Override
+    public List<LoginRecordEntity> findWithFilters(String userId, Instant startDate, Instant endDate, Integer firstResult, Integer maxResults) {
+        StringBuilder queryBuilder = new StringBuilder("SELECT r FROM LoginRecordEntity r WHERE 1=1");
+
+        if (userId != null) {
+            queryBuilder.append(" AND r.userId = :userId");
+        }
+        if (startDate != null) {
+            queryBuilder.append(" AND r.time >= :startDate");
+        }
+        if (endDate != null) {
+            queryBuilder.append(" AND r.time <= :endDate");
+        }
+        queryBuilder.append(" ORDER BY r.time DESC");
+
+        TypedQuery<LoginRecordEntity> query = em().createQuery(queryBuilder.toString(), LoginRecordEntity.class);
+
+        if (userId != null) {
+            query.setParameter("userId", userId);
+        }
+        if (startDate != null) {
+            query.setParameter("startDate", startDate);
+        }
+        if (endDate != null) {
+            query.setParameter("endDate", endDate);
+        }
+
+        if (firstResult != null && firstResult >= 0) {
+            query.setFirstResult(firstResult);
+        }
+        if (maxResults != null && maxResults > 0) {
+            query.setMaxResults(maxResults);
+        }
+
+        query.setHint(AvailableHints.HINT_READ_ONLY, true);
+        return query.getResultList();
+    }
+
+    @Override
+    public long countWithFilters(String userId, Instant startDate, Instant endDate) {
+        StringBuilder queryBuilder = new StringBuilder("SELECT COUNT(r) FROM LoginRecordEntity r WHERE 1=1");
+
+        if (userId != null) {
+            queryBuilder.append(" AND r.userId = :userId");
+        }
+        if (startDate != null) {
+            queryBuilder.append(" AND r.time >= :startDate");
+        }
+        if (endDate != null) {
+            queryBuilder.append(" AND r.time <= :endDate");
+        }
+
+        TypedQuery<Long> query = em().createQuery(queryBuilder.toString(), Long.class);
+
+        if (userId != null) {
+            query.setParameter("userId", userId);
+        }
+        if (startDate != null) {
+            query.setParameter("startDate", startDate);
+        }
+        if (endDate != null) {
+            query.setParameter("endDate", endDate);
+        }
+
+        query.setHint(AvailableHints.HINT_READ_ONLY, true);
+        Long count = query.getSingleResult();
+        return count != null ? count : 0L;
+    }
+
+    @Override
+    public Optional<LoginRecordEntity> findById(String id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        LoginRecordEntity entity = em().find(LoginRecordEntity.class, id);
+        return Optional.ofNullable(entity);
+    }
+
+    @Override
     public void close() {
         // NOOP
     }
